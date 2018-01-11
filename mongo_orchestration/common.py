@@ -22,6 +22,8 @@ import ssl
 import stat
 import tempfile
 
+from pymongo.errors import OperationFailure
+
 WORK_DIR = os.environ.get('MONGO_ORCHESTRATION_HOME', os.getcwd())
 PID_FILE = os.path.join(WORK_DIR, 'server.pid')
 LOG_FILE = os.path.join(WORK_DIR, 'server.log')
@@ -130,7 +132,15 @@ class BaseModel(object):
 
 def connected(client):
     # Await connection in PyMongo 3.0.
-    client.admin.command('ismaster')
+    for _ in range(10):
+        cluster_time = client._get_topology().max_cluster_time()
+        try:
+            client.admin.command('ismaster')
+            break
+        except OperationFailure as exc:
+            print(exc)
+            print(cluster_time)
+            continue
     return client
 
 

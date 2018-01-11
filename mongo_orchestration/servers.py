@@ -192,23 +192,19 @@ class Server(BaseModel):
     @property
     def connection(self):
         """return authenticated connection"""
+        kwargs = self.kwargs.copy()
+        if not self.is_mongos and self.login and not self.restart_required:
+            kwargs['authSource'] = self.auth_source
+            if self.x509_extra_user:
+                kwargs['username'] = DEFAULT_SUBJECT
+                kwargs['authMechanism'] = 'MONGODB-X509'
+            else:
+                kwargs['username'] = self.login
+                kwargs['password'] = self.password
         c = pymongo.MongoClient(
             self.hostname, fsync=True,
-            socketTimeoutMS=self.socket_timeout, **self.kwargs)
+            socketTimeoutMS=self.socket_timeout, **kwargs)
         connected(c)
-        if not self.is_mongos and self.login and not self.restart_required:
-            db = c[self.auth_source]
-            if self.x509_extra_user:
-                auth_dict = {
-                    'name': DEFAULT_SUBJECT, 'mechanism': 'MONGODB-X509'}
-            else:
-                auth_dict = {'name': self.login, 'password': self.password}
-            try:
-                db.authenticate(**auth_dict)
-            except:
-                logger.exception("Could not authenticate to %s with %r"
-                                 % (self.hostname, auth_dict))
-                raise
         return c
 
     @property
@@ -339,17 +335,21 @@ class Server(BaseModel):
 
             # Wait for Server to respond to isMaster.
             # Only try 6 times, each ConnectionFailure is 30 seconds.
-            max_attempts = 6
-            for i in range(max_attempts):
-                try:
-                    self.run_command('isMaster')
-                    break
-                except pymongo.errors.ConnectionFailure:
-                    logger.exception('isMaster command failed:')
-            else:
-                raise TimeoutError(
-                    "Server did not respond to 'isMaster' after %d attempts."
-                    % max_attempts)
+            with self.connection as client:
+                max_attempts = 6
+                for i in range(max_attempts):
+                    try:
+                        client.admin.command('isMaster')
+                        break
+                    except pymongo.errors.ConnectionFailure:
+                        logger.exception('isMaster command failed:')
+                    except pymongo.errors.OperationFailure:
+                        logger.exception('isMaster command failed:')
+                        time.sleep(5)
+                else:
+                    raise TimeoutError(
+                        "Server did not respond to 'isMaster' after %d "
+                        "attempts." % max_attempts)
         except (OSError, TimeoutError):
             logpath = self.cfg.get('logpath')
             if logpath:

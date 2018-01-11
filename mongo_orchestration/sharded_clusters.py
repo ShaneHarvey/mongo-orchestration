@@ -179,6 +179,7 @@ class ShardedCluster(BaseModel):
                 server_or_rs.restart(config_callback=add_auth)
 
             for config_id in self._configsvrs:
+                # import pdb;pdb.set_trace()
                 restart_with_auth(self.configdb_singleton._storage[config_id])
 
             for server_id in self._routers:
