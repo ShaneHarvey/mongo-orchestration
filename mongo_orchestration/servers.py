@@ -192,23 +192,13 @@ class Server(BaseModel):
     @property
     def connection(self):
         """return authenticated connection"""
+        uri = self.hostname
+        if not self.is_mongos and self.login and not self.restart_required:
+            uri = 'mongodb://%s:%s@%s' % (self.login, self.password, self.hostname)
         c = pymongo.MongoClient(
-            self.hostname, fsync=True,
+            uri, w='majority', fsync=True,
             socketTimeoutMS=self.socket_timeout, **self.kwargs)
         connected(c)
-        if not self.is_mongos and self.login and not self.restart_required:
-            db = c[self.auth_source]
-            if self.x509_extra_user:
-                auth_dict = {
-                    'name': DEFAULT_SUBJECT, 'mechanism': 'MONGODB-X509'}
-            else:
-                auth_dict = {'name': self.login, 'password': self.password}
-            try:
-                db.authenticate(**auth_dict)
-            except:
-                logger.exception("Could not authenticate to %s with %r"
-                                 % (self.hostname, auth_dict))
-                raise
         return c
 
     @property

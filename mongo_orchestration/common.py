@@ -21,6 +21,9 @@ import os
 import ssl
 import stat
 import tempfile
+import time
+
+from pymongo.errors import OperationFailure
 
 WORK_DIR = os.environ.get('MONGO_ORCHESTRATION_HOME', os.getcwd())
 PID_FILE = os.path.join(WORK_DIR, 'server.pid')
@@ -133,8 +136,23 @@ class BaseModel(object):
 
 def connected(client):
     # Await connection in PyMongo 3.0.
-    client.admin.command('ismaster')
-    return client
+    last_error = None
+    for i in range(10):
+        print('ismaster response', i + 1, client)
+        try:
+            client.admin.command('ismaster')
+            m = client.admin.command('ismaster')
+            print(m)
+            return client
+        except OperationFailure as exc:
+            print(exc.details)
+            # KeyNotFound is returned when the given clusterTime is invalid.
+            if exc.code != 211:
+                raise
+            last_error = exc
+            time.sleep(.5)
+
+    raise last_error
 
 
 def update(d, u):
