@@ -363,6 +363,7 @@ class ShardedCluster(BaseModel):
             params['procParams'] = self._strip_auth(
                 params.get('procParams', {}))
             params.setdefault('version', self._version)
+            params.pop('name', None) # name is always "mongod"
             logger.debug("servers create params: {params}".format(**locals()))
             server_id = Servers().create('mongod', **params)
             result = self._add(Servers().hostname(server_id), member_id)
