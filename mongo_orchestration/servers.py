@@ -395,23 +395,19 @@ class Server(BaseModel):
         client = self.connection
         try:
             client.admin.command("shutdown", force=True)
-        except ConnectionFailure:
+        except ConnectionFailure as exc:
             # shutdown succeeds by closing the connection.
             pass
         self.proc.wait()
 
     def stop(self):
         """stop server"""
-        # The shutdown command frequently hangs on 4.0.0.
-        if self.version < (4, 0):
-            try:
-                self.shutdown()
-                return True
-            except PyMongoError as exc:
-                logger.info("Shutdown command failed: %r", exc)
-        logger.info("Sending kill signal to %s on port %s",
-                    self.name, self.port)
-        return process.kill_mprocess(self.proc)
+        try:
+            self.shutdown()
+        except PyMongoError as exc:
+            logger.info("Killing %s with signal, shutdown command failed: %r",
+                        self.name, exc)
+            return process.kill_mprocess(self.proc)
 
     def restart(self, timeout=300, config_callback=None):
         """restart server: stop() and start()
