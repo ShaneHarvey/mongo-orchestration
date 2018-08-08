@@ -255,8 +255,8 @@ def wait_mprocess(process, timeout):
         if exit_code is not None:
             return exit_code
         if time.time() - start > timeout:
-            raise TimeoutError("Command '%s' timed out after %s seconds" %
-                               (process.args, timeout))
+            raise TimeoutError("Process %s timed out after %s seconds" %
+                               (process.pid, timeout))
         time.sleep(0.05)
 
 
