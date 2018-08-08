@@ -32,7 +32,7 @@ LOGGING_FORMAT = '%(asctime)s [%(levelname)s] %(name)s:%(lineno)d - %(message)s'
 DEFAULT_BIND = os.environ.get('MO_HOST', 'localhost')
 DEFAULT_PORT = int(os.environ.get('MO_PORT', '8889'))
 DEFAULT_SERVER = 'cherrypy'
-DEFAULT_SOCKET_TIMEOUT = 20000  # 20 seconds.
+DEFAULT_SOCKET_TIMEOUT = None  # No timeout
 
 # Username for included client x509 certificate.
 DEFAULT_SUBJECT = (
