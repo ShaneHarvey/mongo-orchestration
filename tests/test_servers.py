@@ -349,8 +349,10 @@ class ServerTestCase(unittest.TestCase):
             raise SkipTest(
                 "Need at least MongoDB >= 2.4 to test setParameter.")
         self.server.cleanup()
-        cfg = {"setParameter": {"textSearchEnabled": True,
-                                "enableTestCommands": 1}}
+        cfg = {"setParameter": {"enableTestCommands": 1}}
+        # Enable text search on MongoDB 2.4
+        if SERVER_VERSION < (2, 6):
+            cfg["setParameter"]["textSearchEnabled"] = True
         self.server = Server(self.mongod, cfg)
         self.server.start()
         c = pymongo.MongoClient(self.server.hostname)
