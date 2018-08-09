@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import os
 import re
 import sys
@@ -55,6 +56,10 @@ if sys.version_info[:2] == (2, 6):
 else:
     import unittest
     from unittest import SkipTest
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class SSLTestCase(unittest.TestCase):

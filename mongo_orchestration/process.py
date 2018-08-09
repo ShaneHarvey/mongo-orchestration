@@ -39,7 +39,7 @@ from mongo_orchestration.errors import TimeoutError, RequestError
 from mongo_orchestration.singleton import Singleton
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 def _host():

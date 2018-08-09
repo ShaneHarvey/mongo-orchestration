@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import ssl
 import sys
 import operator
@@ -32,9 +31,6 @@ from mongo_orchestration.process import PortPool
 from tests import (
     SkipTest, certificate, TEST_SUBJECT, unittest, assert_eventually,
     HOSTNAME, SERVER_VERSION, SSLTestCase, TEST_RELEASES)
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 
 class ReplicaSetsTestCase(unittest.TestCase):

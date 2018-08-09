@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import operator
 import pymongo
 import ssl
@@ -32,9 +31,6 @@ from mongo_orchestration.process import PortPool
 from tests import (
     certificate, unittest, SkipTest,
     HOSTNAME, TEST_SUBJECT, SERVER_VERSION, SSLTestCase)
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 
 class ShardsTestCase(unittest.TestCase):
