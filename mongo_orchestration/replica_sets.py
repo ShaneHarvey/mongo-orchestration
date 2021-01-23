@@ -433,7 +433,7 @@ class ReplicaSet(BaseModel):
                     % (client, self.login, self.password))
                 raise
 
-    def connection(self, hostname=None, read_preference=pymongo.ReadPreference.PRIMARY, timeout=300):
+    def connection(self, hostname=None, timeout=300):
         """return MongoReplicaSetClient object if hostname specified
         return MongoClient object if hostname doesn't specified
         Args:
@@ -446,30 +446,16 @@ class ReplicaSet(BaseModel):
         servers = hostname or ",".join(self.server_map.values())
         while True:
             try:
-                if hostname is None:
-                    c = pymongo.MongoReplicaSetClient(
-                        servers, replicaSet=self.repl_id,
-                        read_preference=read_preference,
-                        socketTimeoutMS=self.socket_timeout,
-                        w=self._write_concern, fsync=True, **self.kwargs)
-                    connected(c)
-                    if c.primary:
-                        self._authenticate_client(c)
-                        return c
-                    raise pymongo.errors.AutoReconnect("No replica set primary available")
-                else:
-                    logger.debug("connection to the {servers}".format(**locals()))
-                    c = pymongo.MongoClient(
-                        servers, socketTimeoutMS=self.socket_timeout,
-                        w=self._write_concern, fsync=True, **self.kwargs)
-                    connected(c)
-                    self._authenticate_client(c)
-                    return c
+                logger.debug("connection to the {servers}".format(**locals()))
+                c = pymongo.MongoClient(
+                    servers, replicaSet=self.repl_id,
+                    socketTimeoutMS=self.socket_timeout,
+                    w=self._write_concern, fsync=True, **self.kwargs)
+                connected(c)
+                self._authenticate_client(c)
+                return c
             except (pymongo.errors.PyMongoError):
-                exc_type, exc_value, exc_tb = sys.exc_info()
-                err_message = traceback.format_exception(exc_type, exc_value, exc_tb)
-                logger.error("Exception {exc_type} {exc_value}".format(**locals()))
-                logger.error(err_message)
+                logger.exception("Exception connecting to replica set")
                 if time.time() - t_start > timeout:
                     raise pymongo.errors.AutoReconnect("Couldn't connect while timeout {timeout} second".format(**locals()))
                 time.sleep(1)
